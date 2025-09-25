@@ -1,0 +1,104 @@
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: weather-backend
+  namespace: sunitjha1995-dev
+  labels:
+    app: weather-backend
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: weather-backend
+  namespace: sunitjha1995-dev
+  labels:
+    app: weather-backend
+spec:
+  source:
+    type: Git
+    git:
+      uri: "https://github.com/dewi-xaltius/weather-backend.git"
+      ref: main
+  strategy:
+    type: Docker
+    dockerStrategy: {}
+  output:
+    to:
+      kind: ImageStreamTag
+      name: "weather-backend:latest"
+  triggers:
+    - type: GitHub
+      github:
+        secret: "secret101"
+    - type: Generic
+      generic:
+        secret: "secret101"
+    - type: ConfigChange
+    - type: ImageChange
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weather-backend
+  namespace: sunitjha1995-dev
+  labels:
+    app: weather-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: weather-backend
+  template:
+    metadata:
+      labels:
+        app: weather-backend
+    spec:
+      containers:
+        - name: weather-backend
+          image: image-registry.openshift-image-registry.svc:5000/smdewi-dev/weather-backend:latest
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: OPENWEATHER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openweathermap-api-key
+                  key: OPENWEATHER_API_KEY
+          imagePullPolicy: Always
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weather-backend
+  namespace: sunitjha1995-dev
+  labels:
+    app: weather-backend
+spec:
+  selector:
+    app: weather-backend
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: weather-backend-route
+  namespace: sunitjha1995-dev
+  labels:
+    app: weather-backend
+spec:
+  to:
+    kind: Service
+    name: weather-backend
+  port:
+    targetPort: http
+  tls:
+    termination: edge
