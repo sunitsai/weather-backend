@@ -18,7 +18,7 @@ spec:
   source:
     type: Git
     git:
-      uri: "https://github.com/dewi-xaltius/weather-backend.git"
+      uri: "https://github.com/sunitsai/weather-backend.git"
       ref: main
   strategy:
     type: Docker
@@ -56,7 +56,7 @@ spec:
     spec:
       containers:
         - name: weather-backend
-          image: image-registry.openshift-image-registry.svc:5000/smdewi-dev/weather-backend:latest
+          image: image-registry.openshift-image-registry.svc:5000/sunitjha1995-dev/weather-backend:latest
           ports:
             - name: http
               containerPort: 8080
